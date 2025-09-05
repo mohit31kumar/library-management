@@ -1,0 +1,276 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    /* --- FIX: Correct path to image and restored other properties --- */
+    background: url('background.png') no-repeat center center/cover; /* CORRECTED */
+    background-attachment: fixed;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    position: relative;
+    color: #0f172a; /* Set a base text color */
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.card {
+    position: relative;
+    z-index: 1;
+    width: min(980px, 92vw);
+    background: rgba(255, 255, 255, 0.25); /* Slightly less transparent */
+    border: 1px solid rgba(255, 255, 255, 0.4); /* Brighter border */
+    border-radius: 22px;
+    padding: 28px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.2); /* Deeper shadow */
+}
+
+.card h2 {
+    font-weight: 600; /* Bolder */
+    letter-spacing: .2px;
+    color: #0f172a;
+    text-align: center;
+    margin-bottom: 8px; /* Adjusted margin */
+}
+
+/* MODIFICATION: Added subtitle style */
+.card-subtitle {
+    text-align: center;
+    margin-bottom: 18px;
+    color: #334155;
+    opacity: .9;
+}
+
+button {
+    cursor: pointer;
+    border: 0;
+    font-family: inherit; /* Ensure buttons use the body font */
+    display: inline-flex; /* Use flex for icon alignment */
+    align-items: center;
+    justify-content: center;
+    gap: 8px; /* Space between icon and text */
+}
+
+button.primary {
+    display: block;
+    margin: 8px auto 18px;
+    padding: 12px 22px;
+    border-radius: 999px;
+    background: #2563eb;
+    color: #fff;
+    font-weight: 600;
+    transition: transform .08s ease, background .25s ease;
+}
+
+button.primary:hover { background: #1d4ed8; }
+button.primary:active { transform: translateY(1px) scale(.99); }
+
+/* Reports grid container */
+.reports-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 14px;
+    margin-top: 8px;
+    opacity: 0;
+    transform: translateY(8px);
+    max-height: 0;
+    overflow: hidden;
+    transition: opacity .5s ease, transform .5s ease, max-height .5s ease;
+}
+
+.reports-grid.show {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 1500px;
+}
+
+/* Report tiles */
+.report-tile {
+    grid-column: span 12;
+    background: rgba(255, 255, 255, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 16px;
+    padding: 14px 14px 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    position: relative;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: transform .3s cubic-bezier(.2, .8, .2, 1), box-shadow .3s ease, opacity .7s cubic-bezier(.2,.8,.2,1), transform .7s cubic-bezier(.2,.8,.2,1);
+}
+
+.report-tile:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.12);
+}
+
+.reports-grid.show .report-tile {
+    opacity: 1;
+    transform: none;
+}
+
+/* Responsive grid placement after entrance */
+@media (min-width: 680px) {
+    .report-tile { grid-column: span 6; }
+}
+
+@media (min-width: 980px) {
+    .report-tile { grid-column: span 4; }
+}
+
+.report-tile header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.report-tile h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #0b1220;
+    display: flex; /* Align icon and text */
+    align-items: center;
+    gap: 10px;
+}
+
+.expandBtn {
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: #0ea5e9;
+    color: #fff;
+    font-weight: 600;
+    transition: background .2s ease, transform .1s ease;
+}
+
+.expandBtn[aria-expanded="true"] { background: #0284c7; }
+.expandBtn:active { transform: scale(.97); }
+
+/* Collapsible panel inside tile */
+.panel {
+    border-top: 1px dashed rgba(0, 0, 0, 0.15);
+    margin-top: 10px; /* More space */
+    padding-top: 12px; /* More space */
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transform: translateY(-6px);
+    transition: max-height .4s ease, opacity .35s ease, transform .35s ease;
+}
+
+.panel.show {
+    max-height: 260px;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* MODIFICATION: Styles for inputs and labels */
+.panel label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #334155;
+    margin-bottom: 4px;
+    display: block;
+}
+.panel .panel-description {
+    font-size: 14px;
+    color: #475569;
+    line-height: 1.5;
+    margin-bottom: 8px;
+}
+
+input[type="date"].dateInput {
+    width: 100%;
+    padding: 9px 10px;
+    border-radius: 8px; /* Slightly less rounded */
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    background: #fff;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+/* MODIFICATION: Style for button states and loaders */
+button .fa-solid {
+    transition: transform 0.2s ease;
+}
+button:hover .fa-solid {
+    transform: scale(1.1);
+}
+
+.submitBtn, .downloadBtn {
+    width: 100%;
+    margin-top: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-weight: 700;
+    transition: background .2s ease, transform .1s ease, opacity .2s ease;
+    min-height: 40px; /* Ensure same height during loading */
+}
+
+.submitBtn { background: #16a34a; color: #fff; }
+.submitBtn:hover { background: #15803d; }
+.submitBtn:active { transform: scale(.97); }
+
+.downloadBtn { background: #0ea5e9; color: #fff; }
+.downloadBtn:hover { background: #0284c7; }
+.downloadBtn:active { transform: scale(.97); }
+
+/* Loader styles */
+.loader {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #fff;
+    border-bottom-color: transparent;
+    border-radius: 50%;
+    display: none; /* Hidden by default */
+    animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+button.loading .loader { display: inline-block; }
+button.loading span, button.loading .fa-solid { display: none; }
+button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+button:disabled:hover {
+    background: initial; /* Prevent hover color change when disabled */
+}
+
+.status {
+    margin-top: 10px; /* More space */
+    font-size: 13px;
+    font-weight: 500;
+    min-height: 18px;
+    opacity: 0;
+    transition: all .3s ease;
+    padding: 8px 12px;
+    border-radius: 8px;
+    line-height: 1.4;
+    display: none; /* Hide by default, show with JS */
+}
+
+/* MODIFICATION: Status variants */
+.status.show {
+    display: block;
+    opacity: 1;
+}
+.status.info { background: rgba(59, 130, 246, 0.15); color: #1e40af; }
+.status.success { background: rgba(34, 197, 94, 0.15); color: #15803d; }
+.status.error { background: rgba(239, 68, 68, 0.15); color: #b91c1c; }

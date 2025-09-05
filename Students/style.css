@@ -1,0 +1,487 @@
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Jost", sans-serif;
+    }
+
+    /* Fullscreen overlay */
+    .glass-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 15, 15, 0.5);
+      backdrop-filter: blur(7px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      /* Covers everything */
+    }
+
+    /* Login box */
+    .login-box {
+      background: rgba(65, 105, 225, 0.25);
+      border-radius: 16px;
+      padding: 30px;
+      text-align: center;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      max-width: 320px;
+      width: 90%;
+    }
+
+    .login-box h2 {
+      color: white;
+      margin-bottom: 20px;
+    }
+
+    .login-box input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    .login-box button {
+      padding: 10px;
+      width: 100%;
+      border: none;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.3);
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .login-box button:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    #login-error {
+      color: red;
+      font-size: 14px;
+      margin-top: 8px;
+    }
+
+    #date-time-container {
+      position: absolute;
+      top: 30px;
+      left: 30px;
+      padding: 15px 25px;
+      /* Adjusted padding for two lines */
+
+      /* Blue Glassmorphism Effect */
+      background: rgba(65, 105, 225, 0.25);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 12px;
+      border: 1px solid rgba(65, 105, 225, 0.4);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+
+      color: white;
+      text-align: center;
+      z-index: 10;
+      min-width: 250px;
+      /* Give it a minimum width */
+    }
+
+    /* Style for the time (HH:MM:SS) */
+    #digital-clock {
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Style for the date and day */
+    #digital-date {
+      font-size: 14px;
+      font-weight: 400;
+      margin-top: 4px;
+      /* Space between time and date */
+      opacity: 0.9;
+      letter-spacing: 0.5px;
+    }
+
+    /* --- STYLE FOR THE NEW PAGE TITLE --- */
+    .page-title {
+      position: absolute;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      /* This line was changed to stretch the title */
+      padding: 15px 80px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+      color: white;
+      z-index: 10;
+      text-align: center;
+    }
+
+    .page-title h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 600;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    body {
+      background: linear-gradient(rgba(15, 15, 25, 0.6), rgba(15, 15, 25, 0.6)),
+      url("background.png") center/cover no-repeat;
+      height: 100vh;
+      overflow: hidden;
+      color: #fff;
+    }
+
+    /* --- LIVE STATUS PANEL --- */
+    .live-status-panel {
+      position: absolute;
+      right: 30px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 340px;
+      max-height: 450px;
+      /* Limits the height, works with overflow */
+      display: flex;
+      flex-direction: column;
+
+      /* Glassmorphism Effect */
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: 0 4px S30px rgba(0, 0, 0, 0.1);
+      color: white;
+      z-index: 10;
+      padding: 20px;
+    }
+
+    .live-status-panel h2 {
+      text-align: center;
+      margin-bottom: 15px;
+      font-weight: 600;
+    }
+
+    .table-container {
+      overflow-y: auto;
+      /* This makes the table body scrollable */
+      flex-grow: 1;
+      /* Allows the container to fill the panel's height */
+    }
+
+    .live-status-panel table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .live-status-panel th,
+    .live-status-panel td {
+      padding: 10px 8px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .live-status-panel thead th {
+      position: sticky;
+      /* Makes header stick to top when scrolling */
+      top: 0;
+      background: rgba(255, 255, 255, 0.15);
+      font-weight: 600;
+    }
+
+    .live-status-panel tbody tr:last-child td {
+      border-bottom: none;
+      /* Removes the border from the last row */
+    }
+
+    /* Custom Scrollbar Styling (Optional, but looks better) */
+    .table-container::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .table-container::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+    }
+
+    .table-container::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 10px;
+    }
+
+    .table-container::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    .container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .logo {
+      width: 200px;
+      height: 200px;
+      background: url("logo.png") center/contain no-repeat;
+      transition: transform 0.6s ease;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .login-panel {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%) scale(0.9);
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 16px;
+      padding: 30px;
+      width: 320px;
+      opacity: 0;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .login-panel.visible {
+      opacity: 1;
+      transform: translateY(-50%) scale(1);
+      pointer-events: auto;
+    }
+
+    /* --- STYLES FOR ROLE AND REASON PANELS --- */
+    #roleSelection,
+    #reasonSelection {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .role-option,
+    .reason-option {
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      text-align: center;
+      transition: background 0.3s, border 0.3s;
+      border: 2px solid transparent;
+      cursor: pointer;
+    }
+
+    .role-option.selected,
+    .reason-option.selected {
+      background: rgba(255, 255, 255, 0.35);
+      border: 2px solid #4169e1;
+    }
+
+    .role-option.hovered,
+    .reason-option.hovered {
+      background: rgba(255, 255, 255, 0.25);
+      border: 2px solid #4169e1;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* --- STYLES FOR INPUT FIELD AND BUTTON --- */
+    #enrollment {
+      width: 100%;
+      margin-top: 15px;
+    }
+
+    #enrollInput {
+      width: 100%;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 16px;
+      outline: none;
+      text-align: center;
+    }
+
+    #submitBtn {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      background: #4169e1;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    #submitBtn:hover,
+    #submitBtn:focus {
+      background: #27408b;
+    }
+
+    /* --- DEVELOPER CREDITS (NEW) --- */
+    .developer-credits {
+      position: fixed;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.5;
+      z-index: 5;
+    }
+
+    .developer-credits p {
+      margin: 0;
+    }
+
+    /* --- TOAST NOTIFICATION --- */
+    #toast {
+      position: fixed;
+      top: -100px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 25px;
+      border-radius: 8px;
+      background-color: #4169e1;
+      color: white;
+      z-index: 1001;
+      transition: top 0.5s ease-in-out;
+      font-size: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    #toast.show {
+      top: 20px;
+    }
+
+    /* --- LIVE SUMMARY PANEL (NEW) --- */
+.summary-panel {
+  position: absolute;
+  left: 30px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 280px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  color: white;
+  z-index: 10;
+}
+
+.summary-panel h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 18px;
+  padding: 12px 5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.summary-item:last-child {
+  border-bottom: none;
+}
+
+.summary-item span:last-child {
+  font-weight: 600;
+}
+
+/* --- LIVE STATUS PANEL (RIGHT) --- */
+.live-status-panel {
+  position: absolute;
+  right: 30px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 340px;
+  max-height: 450px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  z-index: 10;
+}
+
+.live-status-panel h2 {
+  text-align: center;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.table-container {
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.live-status-panel table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.live-status-panel th,
+.live-status-panel td {
+  padding: 10px 8px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.live-status-panel thead th {
+  position: sticky;
+  top: 0;
+  background: rgba(255, 255, 255, 0.15);
+  font-weight: 600;
+}
+
+.live-status-panel tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}

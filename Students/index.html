@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Poornima University Library</title>
+  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+  
+</head>
+
+<body>
+  <div id="date-time-container">
+    <div id="digital-clock"></div>
+    <div id="digital-date"></div>
+  </div>
+  <div class="page-title">
+    <h1>Visitor's Log</h1>
+  </div>
+  <!-- Login Overlay -->
+  <div id="login-overlay" class="glass-overlay">
+    <div class="login-box">
+      <h2>Library Login</h2>
+      <input type="text" id="login-id" placeholder="Login ID">
+      <input type="password" id="login-pass" placeholder="Password">
+      <button id="login-submit">Login</button>
+      <p id="login-error"></p>
+    </div>
+  </div>
+
+    <!-- Left Summary Panel (NEW) -->
+  <div class="summary-panel">
+    <h2>Live Report</h2>
+    <div class="summary-item">
+      <span>Entries Today</span>
+      <span id="entries-today">0</span>
+    </div>
+    <div class="summary-item">
+      <span>Currently Inside</span>
+      <span id="currently-inside">0</span>
+    </div>
+    <div class="summary-item">
+      <span>Peak Hour Today</span>
+      <span id="peak-hour">N/A</span>
+    </div>
+  </div>
+
+  <div id="main-ui" class="hidden">
+    <h1>Welcome to the Library</h1>
+    <p>You are logged in for today.</p>
+    <button id="logout-btn">Logout</button>
+  </div>
+  <!-- The rest of your body content should follow -->
+  <!-- LIVE STATUS PANEL -->
+  <div class="live-status-panel">
+    <h2>Who's Inside?</h2>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Sr.</th>
+            <th>Reg. No.</th>
+            <th>Name</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if users_inside %}
+          {% for user in users_inside %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <!-- Display only the last 5 digits of the registration number -->
+            <td>{{ user.full_reg_no[-5:] }}</td>
+            <td>{{ user.name }}</td>
+          </tr>
+          {% endfor %}
+          {% else %}
+          <tr>
+            <td colspan="3" style="text-align: center; padding: 20px;">The library is currently empty.</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div id="toast" data-message="{{ toast_message }}" data-error="{{ 'true' if toast_type == 'error' else 'false' }}">
+  </div>
+
+  <div class="container">
+    <!-- Flashed message display -->
+    <div id="toast" data-message="{{ toast_message }}" data-error="{{ 'true' if toast_type == 'error' else 'false' }}">
+    </div>
+
+    <div class="container">
+      <div class="logo" id="logo" tabindex="0"></div>
+
+      <div class="login-panel" id="loginPanel">
+        <!-- ROLE SELECTION (Step 1) -->
+        <div id="roleSelection">
+          <div class="role-option selected" data-role="Student">Student</div>
+          <div class="role-option" data-role="Faculty">Faculty</div>
+        </div>
+
+        <!-- REASON FOR VISIT (Step 2) - NEW
+        <div id="reasonSelection">
+          <div class="reason-option" data-reason="Self Study">Self Study</div>
+          <div class="reason-option" data-reason="Book Issue">Book Issue</div>
+          <div class="reason-option" data-reason="Book Return">Book Return</div>
+          <div class="reason-option" data-reason="Reference">Reference</div>
+        </div> -->
+
+
+        <!-- ENROLLMENT INPUT (Step 3) -->
+          <div id="enrollment" class="hidden">
+        <input type="text" id="enrollInput" placeholder="Enter Last Digits of Reg. No." inputmode="numeric">
+        <p id="enrollError" class="error-text"></p>
+        <button id="submitBtn">Next</button>
+      </div>
+
+      <!-- Reason selection is removed from the flow -->
+      <form id="enrollForm" action="{{ url_for('check_user') }}" method="POST" class="hidden">
+        <input type="hidden" id="hiddenRole" name="role">
+        <input type="hidden" id="hiddenEnroll" name="registry_last_digits">
+        <!-- hiddenReason is no longer needed but kept to prevent errors if referenced -->
+        <input type="hidden" id="hiddenReason" name="reason" value="Self Study">
+      </form>
+      </div>
+    </div>
+
+    <!-- DEVELOPER CREDITS (NEW) -->
+    <div class="developer-credits">
+      <p>Developed By:</p>
+      <p>Sameer & Aryan Gaikwad (B.Tech AIML 2024-28)</p>
+      <p>Kshitij & Mohit Kumar (BCA 2024-27)</p>
+
+      <!-- This is the new line -->
+      <p style="margin-top: 8px;">Under the supervision of Dr. Vipin Khatri</p>
+    </div>
+
+    
+
+
+    <script src="script.js"></script>
+</body>
+
+</html>
