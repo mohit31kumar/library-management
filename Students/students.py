@@ -160,7 +160,7 @@ def get_live_stats():
     currently_inside = inside_result['count'] if inside_result else 0
     print("inside_result:", inside_result)
 
-    peak_hour_query = """SELECT HOUR(entry_time) as hour, COUNT(log_id) as count
+    peak_hour_query = """SELECT HOUR(entry_time) as hour, COUNT(id) as count
                          FROM logs WHERE entry_date = %s
                          GROUP BY HOUR(entry_time) ORDER BY count DESC, hour DESC LIMIT 1"""
     peak_hour_result = execute_query(peak_hour_query, (today,), fetch_one=True)
@@ -201,6 +201,12 @@ def auto_exit_users():
     except Exception as e:
         print(f"[AUTO-EXIT ERROR] {e}")
 
+# Schedule auto_exit_users to run every day at 16:30 IST
+scheduler = BackgroundScheduler(timezone=IST)
+scheduler.add_job(auto_exit_users, trigger='cron', hour=22, minute=54, id='auto_exit_job')
+scheduler.start()
+atexit.register(lambda: scheduler.shutdown())
+
 # Run startup cleanup    
 def run_startup_cleanup():
     """Cleanup leftover logs from previous days or after auto-exit cutoff."""
@@ -221,6 +227,7 @@ def run_startup_cleanup():
             print("[STARTUP CLEANUP] No old logs found. Skipping cleanup.")
     except Exception as e:
         print(f"[STARTUP CLEANUP ERROR] {e}")
+    return None
 
 # Initialize scheduler
 try:
@@ -287,9 +294,9 @@ def check_user():
             # User not inside → handle entry
 
             # Check library timing
-            # if now.hour < 7 or now.hour >= 20:
-            #     flash("Library closed. Hours: 7 AM - 8 PM", "error")
-            #     return redirect(url_for('index'))
+            if now.hour < 7 or now.hour >= 20:
+                flash("Library closed. Hours: 7 AM - 8 PM", "error")
+                return redirect(url_for('index'))
 
             create_entry_log(user, role, reason)
             flash(f"Welcome! {user['name']} entered the library.", "success")
