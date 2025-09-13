@@ -107,12 +107,12 @@ def get_users_inside():
     result = execute_query(query, fetch=True)
     return result or []
 
-def create_entry_log(user, role, reason):
+def create_entry_log(user, role):
     """Create new entry log"""
     now = datetime.now(IST)
     query = """INSERT INTO logs 
-               (full_reg_no, name, branch, year,  entry_date, entry_time, role, reason) 
-               VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
+               (full_reg_no, name, branch, year,  entry_date, entry_time, role) 
+               VALUES (%s, %s, %s, %s, %s, %s, %s)"""
     
     values = (
         str(user['full_reg_no']),
@@ -121,8 +121,7 @@ def create_entry_log(user, role, reason):
         str(user.get('year', 'N/A')),
         now.date(),
         now.time(),
-        role,
-        reason
+        role
     )
     
     return execute_query(query, values)
@@ -249,6 +248,7 @@ def index():
         if messages:
             toast_type, toast_message = messages[0]
         
+        run_startup_cleanup()
         return render_template('index.html', 
                              toast_message=toast_message, 
                              toast_type=toast_type, 
@@ -291,12 +291,12 @@ def check_user():
             flash(f"Goodbye! {user['name']} exited the library.", "success")
             return redirect(url_for('index'))
         else:
-            # User not inside → handle entry
+            
 
             # Check library timing
-            if now.hour < 7 or now.hour >= 20:
-                flash("Library closed. Hours: 7 AM - 8 PM", "error")
-                return redirect(url_for('index'))
+            # if now.hour < 7 or now.hour >= 20:
+            #     flash("Library closed. Hours: 7 AM - 8 PM", "error")
+            #     return redirect(url_for('index'))
 
             create_entry_log(user, role, reason)
             flash(f"Welcome! {user['name']} entered the library.", "success")
@@ -307,6 +307,9 @@ def check_user():
         traceback.print_exc()
         flash("An unexpected error occurred. Please try again.", "error")
         return redirect(url_for('index'))
+
+
+
 
 
 @app.route('/check-status', methods=['POST'])

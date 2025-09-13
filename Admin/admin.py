@@ -1,179 +1,243 @@
-# --- 1. Import Necessary Libraries ---
-import pandas as pd
+from flask import Flask, render_template, jsonify, send_file, Response, make_response
 import mysql.connector
-from flask import (
-    Flask,
-    request,
-    send_file,
-    jsonify,
-    render_template,
-    send_from_directory,
-)
-from flask_cors import CORS
-from datetime import datetime
+from datetime import date, datetime
+import csv
 import io
+import pandas as pd
+from flask import send_file, Response
 
-# --- 2. Database Configuration ---
-# IMPORTANT: Update these values with your actual database credentials.
-db_config = {
-    'host': 'localhost',      # Or your database server IP
-    'user': 'root',           # Your database username
-    'password': '',           # Your database password
-    'database': 'lib_main'
+
+app = Flask(__name__)
+
+# Database config
+DB_CONFIG = {
+    "host": "localhost",
+    "user": "root",
+    "password": "",
+    "database": "lib_main"
 }
 
-# --- 3. Initialize the Flask Application ---
-app = Flask(__name__, template_folder='.', static_folder='.')
-CORS(app)  # Enable CORS to allow requests from the browser
+def get_db_connection():
+    return mysql.connector.connect(**DB_CONFIG)
 
-# --- 4. Helper Function to Fetch Data from MySQL ---
-def get_log_data():
+@app.route("/")
+def index():
+    return render_template("ind.html")
+
+# ---------------------- APIs ----------------------
+
+@app.route("/api/live_stats")
+def live_stats():
+    conn = get_db_connection()
+    cur = conn.cursor(dictionary=True)
+    
+    # Users currently inside
+    cur.execute("SELECT COUNT(*) AS inside FROM logs WHERE exit_time IS NULL")
+    inside = cur.fetchone()["inside"]
+
+    # Today's entries
+    cur.execute("SELECT COUNT(*) AS today_entries FROM logs WHERE entry_date = CURDATE()")
+    today_entries = cur.fetchone()["today_entries"]
+
+    cur.close()
+    conn.close()
+    return jsonify({"inside": inside, "today_entries": today_entries})
+
+@app.route("/api/active_users")
+def active_users():
+    conn = get_db_connection()
+    cur = conn.cursor(dictionary=True)
+    cur.execute("SELECT full_reg_no, name, branch, year, role, entry_date, entry_time FROM logs WHERE exit_time IS NULL")
+    users = cur.fetchall()
+    cur.close()
+    conn.close()
+    return jsonify(users)
+
+@app.route("/api/peak_hours_week")
+def peak_hours_week():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # Last 7 days (weekly)
+    query = """
+        SELECT HOUR(entry_time) AS hour, COUNT(*) AS entries
+        FROM logs
+        WHERE entry_date >= CURDATE() - INTERVAL 7 DAY
+        GROUP BY HOUR(entry_time)
+        ORDER BY hour;
     """
-    Connects to the MySQL database and fetches the library logs.
-    Returns a pandas DataFrame.
-    """
+    cursor.execute(query)
+    rows = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    # Format for Chart.js
+    data = []
+    for row in rows:
+        data.append({
+            "hour": f"{row['hour']:02d}:00",   # format 2-digit hour
+            "entries": row["entries"]
+        })
+
+    return jsonify(data)
+
+@app.route("/api/daily_entries")
+def daily_entries():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT entry_date, COUNT(*) 
+        FROM logs 
+        WHERE entry_date IS NOT NULL
+        GROUP BY entry_date 
+        ORDER BY entry_date DESC LIMIT 7
+    """)
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return jsonify([{"date": str(r[0]), "entries": r[1]} for r in rows][::-1])
+
+@app.route("/api/weekly_entries")
+def weekly_entries():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT WEEK(entry_date) AS week, COUNT(*) 
+        FROM logs 
+        WHERE entry_date IS NOT NULL
+        GROUP BY week 
+        ORDER BY week DESC LIMIT 4
+    """)
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return jsonify([{"week": str(r[0]), "entries": r[1]} for r in rows][::-1])
+
+@app.route("/api/monthly_entries")
+def monthly_entries():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT DATE_FORMAT(entry_date, '%Y-%m') AS month, COUNT(*) 
+        FROM logs 
+        WHERE entry_date IS NOT NULL
+        GROUP BY month 
+        ORDER BY month DESC LIMIT 12
+    """)
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return jsonify([{"month": r[0], "entries": r[1]} for r in rows][::-1])
+
+
+@app.route('/api/user_history/<reg_no>', methods=['GET'])
+def user_history(reg_no):
+    reg_no = reg_no.strip()
+
+    # Validate 5-digit registration number
+    if not reg_no.isdigit() or len(reg_no) != 5:
+        return jsonify({"error": "Invalid 5-digit registration number"}), 400
+
     try:
-        # Establish a connection to the database
-        conn = mysql.connector.connect(**db_config)
-        # SQL query to select all data from the logs table
-        query = "SELECT full_reg_no, name, branch, year, entry_date, entry_time, exit_date, exit_time FROM logs"
-        # Execute the query and load the result into a pandas DataFrame
-        df = pd.read_sql(query, conn)
-        # Convert the 'entry_date' column to datetime objects for filtering
-        df['entry_date'] = pd.to_datetime(df['entry_date'])
-        return df
-    except mysql.connector.Error as e:
-        print(f"Error connecting to MySQL or fetching data: {e}")
-        # Return an empty DataFrame if the connection fails
-        return pd.DataFrame()
-    finally:
-        # Ensure the connection is always closed
-        if 'conn' in locals() and conn.is_connected():
-            conn.close()
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
 
-# --- 5. Helper Function to Create and Send Excel Files ---
-def create_excel_response(df, filename="report.xlsx"):
-    """
-    Converts a pandas DataFrame to an in-memory Excel file and prepares it for download.
-    """
-    output = io.BytesIO()
-    # The 'xlsxwriter' engine is used for creating Excel files.
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        df.to_excel(writer, index=False, sheet_name='Report')
+        query = """
+            SELECT full_reg_no, name, branch, year, role, 
+                   entry_date, entry_time, exit_time
+            FROM logs
+            WHERE full_reg_no LIKE %s
+            ORDER BY entry_date DESC, entry_time DESC
+        """
+        cursor.execute(query, ('%/' + reg_no,))
+        results = cursor.fetchall()
+
+        # Convert datetime / timedelta to string
+        for row in results:
+            for key in ['entry_date', 'entry_time', 'exit_time']:
+                if row[key] is not None:
+                    row[key] = str(row[key])
+
+        print(f"User {reg_no} history fetched:", results)
+
+    except Exception as e:
+        print("Error fetching user history:", e)
+        return jsonify({"error": "Server error. Please try again later."}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+    return jsonify(results if results else [])
+
+
+
+@app.route('/export/csv', methods=['GET'])
+def export_csv():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM logs")
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    if not rows:
+        return "No data to export", 400
+
+    # Convert entry_time and exit_time to string
+    for row in rows:
+        if row.get('entry_time'):
+            row['entry_time'] = str(row['entry_time'])
+        if row.get('exit_time'):
+            row['exit_time'] = str(row['exit_time'])
+
+    df = pd.DataFrame(rows)
+    output = io.StringIO()
+    df.to_csv(output, index=False)
     output.seek(0)
-    return send_file(
+
+    return Response(
         output,
-        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        as_attachment=True,
-        download_name=filename
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment;filename=logs.csv"}
     )
 
-# --- 6. API Endpoints for Reports and Static Files ---
-@app.route('/sty.css')
-def serve_css():
-    return send_from_directory('.', 'sty.css')
+@app.route('/export/excel', methods=['GET'])
+def export_excel():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM logs")
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
 
-@app.route('/scr.js')
-def serve_js():
-    return send_from_directory('.', 'scr.js')
+    if not rows:
+        return "No data to export", 400
 
-@app.route('/report/custom_date_range', methods=['GET'])
-def custom_date_range():
-    """
-    Generates a report with unique student entries for a custom date range.
-    This corresponds to the 'Custom Date Report' feature in the admin panel.
-    """
-    log_df = get_log_data()
-    if log_df.empty:
-        return jsonify({"error": "Could not connect to the database or the log is empty."}), 500
+    # Convert entry_time and exit_time to string
+    for row in rows:
+        if row.get('entry_time'):
+            row['entry_time'] = str(row['entry_time'])
+        if row.get('exit_time'):
+            row['exit_time'] = str(row['exit_time'])
 
-    start_date_str = request.args.get('start_date')
-    end_date_str = request.args.get('end_date')
+    df = pd.DataFrame(rows)
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='Logs')
+    output.seek(0)
 
-    if not start_date_str or not end_date_str:
-        return jsonify({"error": "Both 'start_date' and 'end_date' are required. Format: YYYY-MM-DD"}), 400
-
-    try:
-        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
-    except ValueError:
-        return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
-
-    if start_date > end_date:
-        return jsonify({"error": "'start_date' cannot be after 'end_date'."}), 400
-
-    # Filter logs for the specified date range
-    mask = (log_df['entry_date'].dt.date >= start_date) & (log_df['entry_date'].dt.date <= end_date)
-    date_range_logs = log_df[mask]
-
-    if date_range_logs.empty:
-        return jsonify({"error": f"No entries found between {start_date_str} and {end_date_str}."}), 404
-    
-    # Create a summary DataFrame
-    report_df = date_range_logs.copy()
-    report_df['entry_date'] = report_df['entry_date'].dt.strftime('%d-%m-%Y')
-
-    filename = f"report_{start_date_str}_to_{end_date_str}.xlsx"
-    return create_excel_response(report_df, filename)
+    return send_file(
+        output,
+        download_name="logs.xlsx",
+        as_attachment=True,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
 
 
-@app.route('/report/daily_summary', methods=['GET'])
-def daily_summary():
-    """
-    Generates a complete log for a single specified day.
-    Corresponds to the 'Daily Summary' feature in the admin panel.
-    """
-    log_df = get_log_data()
-    if log_df.empty:
-        return jsonify({"error": "Could not connect to the database or the log is empty."}), 500
-
-    date_str = request.args.get('date')
-    if not date_str:
-        return jsonify({"error": "A 'date' parameter is required. Format: YYYY-MM-DD"}), 400
-
-    try:
-        target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-    except ValueError:
-        return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
-
-    # Filter logs for the target date
-    daily_summary_df = log_df[log_df['entry_date'].dt.date == target_date].copy()
-    if daily_summary_df.empty:
-        return jsonify({"error": f"No library entries found for {date_str}."}), 404
-
-    # Format date for the report
-    daily_summary_df['entry_date'] = daily_summary_df['entry_date'].dt.strftime('%d-%m-%Y')
-    filename = f"daily_summary_{date_str}.xlsx"
-    return create_excel_response(daily_summary_df, filename)
 
 
-@app.route('/report/full_log_dump', methods=['GET'])
-def full_log_dump():
-    """
-    Generates a full dump of all library logs.
-    Corresponds to the 'Download Excel' feature in the admin panel.
-    """
-    log_df = get_log_data()
-    if log_df.empty:
-        return jsonify({"error": "Could not connect to the database or the log is empty."}), 500
 
-    # Sort data for readability
-    full_df = log_df.sort_values(by=['entry_date', 'entry_time'], ascending=[False, False]).copy()
-    full_df['entry_date'] = full_df['entry_date'].dt.strftime('%d-%m-%Y')
-    
-    filename = "full_library_log_dump.xlsx"
-    return create_excel_response(full_df, filename)
-
-
-@app.route('/')
-def home():
-    """
-    Serves the main admin panel page.
-    """
-    return render_template('ind.html')
-
-# --- 7. Run the Application ---
-if __name__ == '__main__':
-    # Run the Flask app, making it accessible on your local network
+if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=5001)
-
