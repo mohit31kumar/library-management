@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>Library Admin Dashboard</title>
@@ -8,321 +9,499 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
-    body { background: #f8f9fa; }
-    .card { border-radius: 12px; }
-    canvas { background: white; padding: 10px; border-radius: 12px; }
+    body {
+      background: #f8f9fa;
+    }
+
+    .card {
+      border-radius: 12px;
+    }
+
+    canvas {
+      background: white;
+      padding: 10px;
+      border-radius: 12px;
+    }
   </style>
 </head>
+
 <body class="container py-4">
 
-  <h1 class="mb-4 text-center">📊 Library Admin Dashboard</h1>
+<!-- Navbar for internal routing -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4 rounded">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">Dashboard</a>
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link" href="#stats">Stats</a></li>
+          <li class="nav-item"><a class="nav-link" href="#activeUsers">Active Users</a></li>
+          <li class="nav-item"><a class="nav-link" href="#charts">Charts</a></li>
+          <li class="nav-item"><a class="nav-link" href="#export">Export</a></li>
+          <li class="nav-item"><a class="nav-link" href="#import">Import</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
 
-  <!-- Live Stats -->
-  <div class="row mb-4">
-    <div class="col-md-6">
-      <div class="card p-3 text-center">
-        <h5>Users Currently Inside</h5>
-        <h2 id="insideCount">0</h2>
+  <!-- Stats Section -->
+  <section id="stats" class="container mb-5">
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <div class="card p-3 text-center">
+          <h5>Users Currently Inside</h5>
+          <h2 id="insideCount">0</h2>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card p-3 text-center">
+          <h5>Today's Entries</h5>
+          <h2 id="todayEntries">0</h2>
+        </div>
       </div>
     </div>
-    <div class="col-md-6">
-      <div class="card p-3 text-center">
-        <h5>Today's Entries</h5>
-        <h2 id="todayEntries">0</h2>
-      </div>
-    </div>
-  </div>
+  </section>
 
-  <!-- Graphs -->
-<div class="row mb-4">
-  <div class="col-md-12">
-    <div class="card p-3">
-      <h5>Peak Hours (Today)</h5>
-      <div class="chart-container">
-        <canvas id="peakChart"></canvas>
+  <!-- Charts Section -->
+  <section id="charts" class="container mb-5">
+    <div class="row mb-4">
+      <div class="col-md-12">
+        <div class="card p-3">
+          <h5>Peak Hours (Today)</h5>
+          <div class="chart-container">
+            <canvas id="peakChart"></canvas>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
 
-<div class="row mb-4">
-  <div class="col-md-4">
-    <div class="card p-3">
-      <h5>Daily Entries (Last 7 days)</h5>
-      <div class="chart-container">
-        <canvas id="dailyChart"></canvas>
+    <div class="row mb-4">
+      <div class="col-md-4">
+        <div class="card p-3">
+          <h5>Daily Entries (Past 7 Days)</h5>
+          <div class="chart-container">
+            <canvas id="dailyChart"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card p-3">
+          <h5>Weekly Entries (Past 30 Days)</h5>
+          <div class="chart-container">
+            <canvas id="weeklyChart"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card p-3">
+          <h5>Monthly Entries (Past 12 Months)</h5>
+          <div class="chart-container">
+            <canvas id="monthlyChart"></canvas>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-  <div class="col-md-4">
-    <div class="card p-3">
-      <h5>Weekly Entries (Last Month)</h5>
-      <div class="chart-container">
-        <canvas id="weeklyChart"></canvas>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="card p-3">
-      <h5>Monthly Entries (Last Year)</h5>
-      <div class="chart-container">
-        <canvas id="monthlyChart"></canvas>
-      </div>
-    </div>
-  </div>
-</div>
+  </section>
+
+
 
   <!-- Export Graphs -->
   <div class="mb-4">
     <button class="btn btn-danger" onclick="exportPDF()">Export Graphs as PDF</button>
   </div>
 
-<!-- Active Users -->
-<div class="card p-3 mb-4">
-  <h5>Active Users (Inside)</h5>
-  <div class="table-responsive scrollable-table">
-    <table class="table table-striped" id="activeUsersTable">
-      <thead class="table-dark">
-        <tr>
-          <th>Reg No</th><th>Name</th><th>Branch</th><th>Year</th><th>Role</th><th>Entry Time</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+<section id="activeUsers" class="container mt-5">
+  <div class="card p-3">
+    <h5>Active Users</h5>
+    <div class="scrollable-table">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Reg No</th>
+            <th>Name</th>
+            <th>Branch</th>
+            <th>Year</th>
+            <th>Role</th>
+            <th>Entry Time</th>
+          </tr>
+        </thead>
+        <tbody id="activeUsersTable"></tbody>
+      </table>
+    </div>
+    <div id="activeUsersPagination" class="pagination-controls mt-2"></div>
   </div>
-</div>
-
-<!-- User History Search -->
-<div class="card p-3 mb-4">
-  <h5>User History</h5>
-  <div class="input-group mb-3">
-    <input type="text" id="regNoInput" class="form-control" placeholder="Enter Registration No">
-    <button class="btn btn-primary" onclick="fetchUserHistory()">Search</button>
-  </div>
-  <div class="table-responsive scrollable-table">
-    <table class="table table-striped" id="historyTable">
-      <thead class="table-dark">
-        <tr>
-          <th>Date</th><th>Entry Time</th><th>Exit Time</th><th>Name</th><th>Branch</th><th>Year</th><th>Role</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-</div>
+</section>
 
 
-  <!-- Export Logs -->
-  <div class="mb-4">
-    <a href="/export/csv" class="btn btn-success">Export Logs (CSV)</a>
-    <a href="/export/excel" class="btn btn-success">Export Logs (Excel)</a>
+ <section id="userHistory" class="container mt-5">
+  <div class="card p-3">
+    <h5>User History</h5>
+    <div class="input-group mb-3">
+      <input type="text" id="regNoInput" class="form-control" placeholder="Enter Reg No">
+      <button class="btn btn-primary" id="searchHistoryBtn">Search</button>
+    </div>
+    <div class="scrollable-table">
+      <table  id="historyTable" class="table table-hover">
+        <thead>
+          <tr>
+            <th>Entry Date</th>
+            <th>Entry Time</th>
+            <th>Exit Time</th>
+            <th>Name</th>
+            <th>Branch</th>
+            <th>Year</th>
+            <th>Role</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div id="historyPagination" class="pagination-controls"></div>
   </div>
+</section>
+
+
+  <!-- Export Section -->
+  <section id="export" class="container mb-5">
+    <div class="card p-3">
+      <h5>Export Logs</h5>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-2"><strong>Daily Export</strong></div>
+          <div class="d-flex gap-2 mb-2">
+            <input type="date" id="dailyDate" class="form-control" />
+            <button class="btn btn-success" onclick="exportDailyLogs()">Export</button>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-2"><strong>Custom Date Range</strong></div>
+          <div class="d-flex gap-2 mb-2">
+            <input type="date" id="startDateRange" class="form-control" />
+            <input type="date" id="endDateRange" class="form-control" />
+            <button class="btn btn-primary" onclick="exportRangeLogs()">Export</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+ 
+  <!-- Import Section -->
+  <section id="import" class="container mb-5">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card p-3">
+          <h5>Import Students</h5>
+          <input type="file" id="studentFile" class="form-control mb-2" accept=".xlsx" />
+          <button class="btn btn-success" onclick="importStudents()">Upload</button>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card p-3">
+          <h5>Import Faculties</h5>
+          <input type="file" id="facultyFile" class="form-control mb-2" accept=".xlsx" />
+          <button class="btn btn-success" onclick="importFaculties()">Upload</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
 
   <script>
-    const API_BASE = 'http://'+location.hostname+':5001';
-    const charts = {}; // store chart instances
+const API_BASE = 'http://' + location.hostname + ':5001';
+const charts = {}; // store chart instances
 
-    // Load Live Stats
-    async function loadLiveStats() {
-      const res = await fetch(`${API_BASE}/api/live_stats`);
-      const data = await res.json();
-      document.getElementById('insideCount').innerText = data.inside;
-      document.getElementById('todayEntries').innerText = data.today_entries;
+// ------------------- Live Stats -------------------
+async function loadLiveStats() {
+  try {
+    const res = await fetch(`${API_BASE}/api/live_stats`);
+    const data = await res.json();
+    document.getElementById('insideCount').innerText = data.inside;
+    document.getElementById('todayEntries').innerText = data.today_entries;
+  } catch (err) {
+    console.error("Error loading live stats:", err);
+  }
+}
+
+// ------------------- Export PDF -------------------
+async function exportPDF() {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF("p", "mm", "a4");
+
+    // List all chart IDs and titles
+    const chartsList = [
+      { id: "peakChart", title: "Peak Hours (This Week)" },
+      { id: "dailyChart", title: "Daily Entries (Past 7 Days)" },
+      { id: "weeklyChart", title: "Weekly Entries (Past 30 Days)" },
+      { id: "monthlyChart", title: "Monthly Entries (Past 12 Months)" }
+    ];
+
+    for (let i = 0; i < chartsList.length; i++) {
+      const chartObj = chartsList[i];
+      const canvas = document.getElementById(chartObj.id);
+
+      if (!canvas) continue; // skip if chart doesn't exist
+
+      // Convert canvas to image
+      const img = await html2canvas(canvas, { scale: 2 });
+      const imgData = img.toDataURL("image/png");
+
+      // Add title
+      pdf.setFontSize(14);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(chartObj.title, 105, 15, { align: "center" });
+
+      // Add chart image (X, Y, Width, Height)
+      pdf.addImage(imgData, "PNG", 15, 20, 180, 100);
+
+      // Add new page if more charts left
+      if (i < chartsList.length - 1) {
+        pdf.addPage();
+      }
     }
 
-    // Load Active Users
-    async function loadActiveUsers() {
+    pdf.save("charts.pdf");
+  }
+
+
+// ------------------------ FETCH ACTIVE USERS ------------------------
+async function fetchActiveUsers() {
+    try {
       const res = await fetch(`${API_BASE}/api/active_users`);
-      const data = await res.json();
-      const tbody = document.querySelector('#activeUsersTable tbody');
-      tbody.innerHTML = '';
-      data.forEach(u => {
-        tbody.innerHTML += `
-          <tr>
-            <td>${u.full_reg_no}</td>
-            <td>${u.name}</td>
-            <td>${u.branch}</td>
-            <td>${u.year}</td>
-            <td>${u.role}</td>
-            <td>${u.entry_time}</td>
-          </tr>
-        `;
+      const users = await res.json();
+      renderActiveUsersTable(users, 10); // 10 rows per page
+    } catch (err) {
+      console.error("Error loading active users:", err);
+      document.getElementById("activeUsersTable").innerHTML = `
+        <tr><td colspan="6" class="text-center">Error loading active users</td></tr>
+      `;
+    }
+  }
+
+  function renderActiveUsersTable(data, rowsPerPage = 10) {
+    let currentPage = 1;
+    const tbody = document.getElementById("activeUsersTable");
+    const paginationDiv = document.getElementById("activeUsersPagination");
+
+    function renderPage() {
+      tbody.innerHTML = "";
+      const start = (currentPage - 1) * rowsPerPage;
+      const end = start + rowsPerPage;
+      const paginatedItems = data.slice(start, end);
+
+      if (paginatedItems.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center">No active users</td></tr>`;
+      } else {
+        paginatedItems.forEach(user => {
+          tbody.innerHTML += `
+            <tr>
+              <td>${user.full_reg_no || '-'}</td>
+              <td>${user.name || '-'}</td>
+              <td>${user.branch || '-'}</td>
+              <td>${user.year || '-'}</td>
+              <td>${user.role || '-'}</td>
+              <td>${user.entry_time || '-'}</td>
+            </tr>
+          `;
+        });
+      }
+
+      // Pagination buttons
+      paginationDiv.innerHTML = "";
+      const totalPages = Math.max(1, Math.ceil(data.length / rowsPerPage));
+
+      const prevBtn = document.createElement("button");
+      prevBtn.textContent = "Prev";
+      prevBtn.disabled = currentPage === 1;
+      prevBtn.onclick = () => { currentPage--; renderPage(); };
+
+      const nextBtn = document.createElement("button");
+      nextBtn.textContent = "Next";
+      nextBtn.disabled = currentPage === totalPages;
+      nextBtn.onclick = () => { currentPage++; renderPage(); };
+
+      paginationDiv.appendChild(prevBtn);
+      paginationDiv.appendChild(document.createTextNode(` Page ${currentPage} of ${totalPages} `));
+      paginationDiv.appendChild(nextBtn);
+    }
+
+    renderPage();
+  }
+
+  // Fetch active users when page loads
+  document.addEventListener("DOMContentLoaded", fetchActiveUsers);
+
+  // Optional: refresh active users every 30 seconds
+  setInterval(fetchActiveUsers, 30000);
+
+
+// ------------------------ FETCH USER HISTORY ------------------------
+async function fetchUserHistory() {
+  const regNo = document.getElementById("regNoInput").value.trim();
+  if (!regNo) return alert("Please enter a registration number.");
+
+  try {
+    const res = await fetch(`${API_BASE}/api/user_history/${encodeURIComponent(regNo)}`);
+    if (!res.ok) throw new Error(`Server error: ${res.status}`);
+    const data = await res.json();
+
+    renderTableWithPagination(
+      data,
+      "historyTable",
+      "historyPagination",
+      10,
+      ["entry_date","entry_time","exit_time","name","branch","year","role"]
+    );
+  } catch (err) {
+    console.error("Error fetching user history:", err);
+    const tbody = document.querySelector("#historyTable tbody");
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center">Error fetching history</td></tr>`;
+  }
+}
+
+// ------------------------ TABLE PAGINATION ------------------------
+function renderTableWithPagination(data, tableId, paginationId, rowsPerPage = 10, columns = null) {
+  let currentPage = 1;
+  const tableBody = document.querySelector(`#${tableId} tbody`);
+  const paginationDiv = document.getElementById(paginationId);
+
+  function renderPage() {
+    tableBody.innerHTML = "";
+    const start = (currentPage - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    const paginatedItems = data.slice(start, end);
+
+    if (paginatedItems.length === 0) {
+      tableBody.innerHTML = `<tr><td colspan="${columns.length}" class="text-center">No records found</td></tr>`;
+    } else {
+      paginatedItems.forEach(row => {
+        const tr = document.createElement("tr");
+        if (columns && Array.isArray(columns)) {
+          tr.innerHTML = columns.map(k => `<td>${row[k] ?? ""}</td>`).join("");
+        } else {
+          tr.innerHTML = Object.values(row).map(v => `<td>${v ?? ""}</td>`).join("");
+        }
+        tableBody.appendChild(tr);
       });
     }
 
-    // Chart Loader with fixed bar size
-    async function loadChart(api, ctxId, label, fieldX, fieldY) {
-  const res = await fetch(`${API_BASE}${api}`);
+    // Pagination controls
+    paginationDiv.innerHTML = "";
+    const totalPages = Math.max(1, Math.ceil(data.length / rowsPerPage));
+
+    const prevBtn = document.createElement("button");
+    prevBtn.innerText = "Prev";
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.onclick = () => { currentPage--; renderPage(); };
+
+    const nextBtn = document.createElement("button");
+    nextBtn.innerText = "Next";
+    nextBtn.disabled = currentPage === totalPages;
+    nextBtn.onclick = () => { currentPage++; renderPage(); };
+
+    paginationDiv.appendChild(prevBtn);
+    paginationDiv.appendChild(document.createTextNode(` Page ${currentPage} of ${totalPages} `));
+    paginationDiv.appendChild(nextBtn);
+  }
+
+  renderPage();
+}
+
+// ------------------- Export Functions -------------------
+function exportDailyLogs() {
+  const date = document.getElementById("dailyDate").value;
+  if (!date) return alert("Please select a date");
+  window.location.href = `/export/daily?date=${date}`;
+}
+
+function exportRangeLogs() {
+  const start = document.getElementById("startDateRange").value;
+  const end = document.getElementById("endDateRange").value;
+  if (!start || !end) return alert("Select both start and end dates");
+  window.location.href = `/export/range?start=${start}&end=${end}`;
+}
+
+// ------------------- Charts -------------------
+async function loadChart(api, ctxId, label, fieldX, fieldY) {
+  try {
+    const res = await fetch(`${API_BASE}${api}`);
+    const data = await res.json();
+    const labels = data.map(d => d[fieldX]);
+    const values = data.map(d => d[fieldY]);
+
+    if (charts[ctxId]) {
+      charts[ctxId].data.labels = labels;
+      charts[ctxId].data.datasets[0].data = values;
+      charts[ctxId].update();
+    } else {
+      const ctx = document.getElementById(ctxId).getContext("2d");
+      charts[ctxId] = new Chart(ctx, {
+        type: "bar",
+        data: { labels, datasets: [{ label, data: values, backgroundColor: "#4f46e5", barThickness: 30 }] },
+        options: { responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { autoSkip: false } }, y: { beginAtZero: true } } }
+      });
+    }
+  } catch (err) {
+    console.error("Error loading chart:", err);
+  }
+}
+
+// ------------------- Import Students/Faculties -------------------
+async function importStudents() {
+  const fileInput = document.getElementById("studentFile");
+  if (!fileInput.files.length) return alert("Select a file to upload");
+
+  const formData = new FormData();
+  formData.append("file", fileInput.files[0]);
+
+  const res = await fetch("/import/students", { method: "POST", body: formData });
   const data = await res.json();
-
-  const labels = data.map(d => d[fieldX]);
-  const values = data.map(d => d[fieldY]);
-
-  if (charts[ctxId]) {
-    charts[ctxId].data.labels = labels;
-    charts[ctxId].data.datasets[0].data = values;
-    charts[ctxId].update();
-  } else {
-    const ctx = document.getElementById(ctxId).getContext("2d");
-    charts[ctxId] = new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels: labels,
-        datasets: [{
-          label: label,
-          data: values,
-          backgroundColor: "#4f46e5",
-          barThickness: 30  // fixed width bars
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,  // prevents stretching
-        scales: {
-          x: {
-            ticks: { autoSkip: false, maxRotation: 45, minRotation: 0 }
-          },
-          y: {
-            beginAtZero: true
-          }
-        }
-      }
-    });
-  }
+  alert(data.success || data.error);
 }
 
+async function importFaculties() {
+  const fileInput = document.getElementById("facultyFile");
+  if (!fileInput.files.length) return alert("Select a file to upload");
 
-// User History
-async function fetchUserHistory() {
-  const regNo = document.getElementById('regNoInput').value.trim();
-  const tbody = document.querySelector('#historyTable tbody');
-  tbody.innerHTML = '';
+  const formData = new FormData();
+  formData.append("file", fileInput.files[0]);
 
-  if (!regNo) {
-    alert("⚠️ Please enter a 5-digit Registration Number");
-    return;
-  }
-
-  try {
-    const res = await fetch(`/api/user_history/${regNo}`);
-    
-    if (!res.ok) {
-      throw new Error("Server error: " + res.status);
-    }
-
-    const data = await res.json();
-
-    if (!Array.isArray(data) || data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger">❌ No history found for ${regNo}</td></tr>`;
-      return;
-    }
-
-    data.forEach(h => {
-      tbody.innerHTML += `
-        <tr>
-          <td>${h.entry_date || '-'}</td>
-          <td>${h.entry_time || '-'}</td>
-          <td>${h.exit_time || '-'}</td>
-          <td>${h.name || '-'}</td>
-          <td>${h.branch || '-'}</td>
-          <td>${h.year || '-'}</td>
-          <td>${h.role || '-'}</td>
-          <td>-</td>
-        </tr>
-      `;
-    });
-
-  } catch (err) {
-    console.error("Error fetching user history:", err);
-    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger">⚠️ Error fetching data. Please try again later.</td></tr>`;
-  }
+  const res = await fetch("/import/faculties", { method: "POST", body: formData });
+  const data = await res.json();
+  alert(data.success || data.error);
 }
 
+// ------------------------ INITIALIZE ------------------------
+document.addEventListener("DOMContentLoaded", () => {
+  const searchBtn = document.getElementById("searchHistoryBtn");
+  const regInput = document.getElementById("regNoInput");
+
+  if (searchBtn) searchBtn.addEventListener("click", fetchUserHistory);
+  if (regInput) regInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") fetchUserHistory();
+  });
 
 
-    // Export Graphs as PDF
-    async function exportPDF() {
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF("p", "mm", "a4");
-      let y = 10;
+  const today = new Date().toISOString().slice(0, 10);
+  const dailyInput = document.getElementById('dailyDate');
+  if (dailyInput) dailyInput.value = today;
 
-      for (const id of ["peakChart", "dailyChart", "weeklyChart", "monthlyChart"]) {
-        const canvas = document.getElementById(id);
-        const img = await html2canvas(canvas);
-        const imgData = img.toDataURL("image/png");
-        pdf.addImage(imgData, "PNG", 10, y, 180, 80);
-        y += 90;
-        if (y > 250) { pdf.addPage(); y = 10; }
-      }
+  loadLiveStats();
+  fetchActiveUsers();
+  loadChart('/api/peak_hours_week', 'peakChart', 'Entries', 'hour', 'entries');
+  loadChart('/api/daily_entries', 'dailyChart', 'Entries', 'date', 'entries');
+  loadChart('/api/weekly_entries', 'weeklyChart', 'Entries', 'week', 'entries');
+  loadChart('/api/monthly_entries', 'monthlyChart', 'Entries', 'month', 'entries');
 
-      pdf.save("graphs.pdf");
-    }
-
-// User History
-async function fetchUserHistory() {
-  const regNo = document.getElementById('regNoInput').value.trim();
-  const tbody = document.querySelector('#historyTable tbody');
-  tbody.innerHTML = '';
-
-  // Validate 5-digit registration number
-  if (!/^\d{5}$/.test(regNo)) {
-    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger">⚠️ Please enter a valid 5-digit Registration Number</td></tr>`;
-    return;
-  }
-
-  try {
-    const res = await fetch('/api/user_history/' + regNo);
-
-    if (!res.ok) {
-      throw new Error("Server error: " + res.status);
-    }
-
-    const data = await res.json();
-
-    if (!Array.isArray(data) || data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger">❌ No history found for ${regNo}</td></tr>`;
-      return;
-    }
-
-    // Populate table with results
-    data.forEach(h => {
-      tbody.innerHTML += `
-        <tr>
-          <td>${h.entry_date || '-'}</td>
-          <td>${h.entry_time || '-'}</td>
-          <td>${h.exit_time || '-'}</td>
-          <td>${h.name || '-'}</td>
-          <td>${h.branch || '-'}</td>
-          <td>${h.year || '-'}</td>
-          <td>${h.role || '-'}</td>
-        </tr>
-      `;
-    });
-
-  } catch (err) {
-    console.error(err);
-    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger">⚠️ Error fetching data. Please try again later.</td></tr>`;
-  }
-}
-
-
-    // Init Dashboard
+  setInterval(() => {
     loadLiveStats();
-    loadActiveUsers();
-    loadChart('/api/peak_hours_week', 'peakChart', 'Entries', 'hour', 'entries'); // weekly peak
+    fetchActiveUsers();
+    loadChart('/api/peak_hours_week', 'peakChart', 'Entries', 'hour', 'entries');
     loadChart('/api/daily_entries', 'dailyChart', 'Entries', 'date', 'entries');
     loadChart('/api/weekly_entries', 'weeklyChart', 'Entries', 'week', 'entries');
     loadChart('/api/monthly_entries', 'monthlyChart', 'Entries', 'month', 'entries');
+  }, 30000);
+});
+</script>
 
-    // Refresh every 30s
-    setInterval(() => {
-      loadLiveStats();
-      loadActiveUsers();
-      loadChart('/api/peak_hours_week', 'peakChart', 'Entries', 'hour', 'entries');
-      loadChart('/api/daily_entries', 'dailyChart', 'Entries', 'date', 'entries');
-      loadChart('/api/weekly_entries', 'weeklyChart', 'Entries', 'week', 'entries');
-      loadChart('/api/monthly_entries', 'monthlyChart', 'Entries', 'month', 'entries');
-    }, 30000);
-  </script>
 </body>
+
 </html>

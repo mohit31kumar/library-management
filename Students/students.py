@@ -263,8 +263,7 @@ def check_user():
     try:
         registry_code = request.form.get('registry_last_digits', '').strip()
         role = request.form.get('role', '').strip()
-        # Reason is optional on exit, get if present
-        reason = request.form.get('reason', 'Self Study').strip()
+        
 
         if not role:
             flash("Please select a role.", "error")
@@ -294,11 +293,11 @@ def check_user():
             
 
             # Check library timing
-            # if now.hour < 7 or now.hour >= 20:
-            #     flash("Library closed. Hours: 7 AM - 8 PM", "error")
-            #     return redirect(url_for('index'))
+            if now.hour < 7 or now.hour >= 20:
+                flash("Library closed. Hours: 7 AM - 8 PM", "error")
+                return redirect(url_for('index'))
 
-            create_entry_log(user, role, reason)
+            create_entry_log(user, role)
             flash(f"Welcome! {user['name']} entered the library.", "success")
             return redirect(url_for('index'))
 
@@ -338,7 +337,7 @@ def handle_entry():
     try:
         registry_code = request.form.get('registry_last_digits', '').strip()
         role = request.form.get('role', '').strip()
-        reason = request.form.get('reason', 'Self Study').strip()
+        
 
         if not role:
             flash("Please select a role.", "error")
@@ -363,7 +362,7 @@ def handle_entry():
             return redirect(url_for('index'))
 
         # Create entry log
-        result = create_entry_log(user, role, reason)
+        result = create_entry_log(user, role)
         if result:
             flash(f"Welcome! {user['name']} entered the library.", "success")
         else:
@@ -508,14 +507,10 @@ def not_found(error):
     <a href="/">Go back to homepage</a>
     """, 404
 
-# --- TEST ROUTE ---
 
-@app.route('/test')
-def test():
-    return "<h1>✅ Test route is working!</h1>"
+
 
 if __name__ == '__main__':
     print("Starting Library Management System...")
     print("Visit: http://localhost:5000")
-    print("Test DB: http://localhost:5000/test")
     app.run(debug=True, host='0.0.0.0', port=5000)

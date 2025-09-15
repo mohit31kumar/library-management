@@ -1,145 +1,184 @@
-/* General Body */
+/* ===============================
+   GLOBAL STYLES
+================================= */
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: #f4f6f9;
   color: #333;
 }
 
-/* Page Title */
 h1 {
   font-weight: 700;
   color: #222;
   margin-bottom: 30px;
 }
 
-/* Cards */
+/* ===============================
+   CARDS
+================================= */
 .card {
   border: none;
   border-radius: 14px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   background: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-
 .card:hover {
   transform: translateY(-3px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
 }
-
-/* Stats Section */
 .card h5 {
   font-size: 1rem;
   color: #666;
   margin-bottom: 10px;
 }
-
 .card h2 {
   font-size: 2.2rem;
   font-weight: 700;
   color: #4f46e5;
 }
 
-/* Tables */
+/* ===============================
+   TABLES
+================================= */
 .table {
   background: #fff;
   border-radius: 12px;
   overflow: hidden;
 }
-
 .table thead {
   background: #4f46e5;
   color: white;
   font-weight: 600;
 }
-
 .table tbody tr:hover {
   background: #f1f3f9;
 }
 
-/* Search Input */
-.input-group input {
-  border-radius: 8px 0 0 8px;
-  border: 1px solid #ddd;
+/* Scrollable tables with fixed headers */
+.scrollable-table {
+  max-height: 400px; /* shows ~10 rows */
+  overflow-y: auto;
+}
+.scrollable-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.scrollable-table thead th {
+  position: sticky;
+  top: 0;
+  background: #343a40; /* matches .table-dark */
+  color: #fff;
+  z-index: 1;
 }
 
+/* Pagination */
+.pagination-controls {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  align-items: center;
+  font-size: 14px;
+}
+.pagination-controls button {
+  padding: 5px 12px;
+  border: 1px solid #007bff;
+  background: #fff;
+  color: #007bff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.pagination-controls button:disabled {
+  color: #aaa;
+  border-color: #aaa;
+  cursor: not-allowed;
+}
+
+/* ===============================
+   FORMS & INPUTS
+================================= */
+.input-group input {
+  border: 1px solid #ddd;
+  border-radius: 8px 0 0 8px;
+}
 .input-group .btn {
+  border: none;
   border-radius: 0 8px 8px 0;
   background: #4f46e5;
   color: white;
   font-weight: 500;
-  border: none;
 }
-
 .input-group .btn:hover {
   background: #3730a3;
 }
 
-/* Buttons */
+/* ===============================
+   BUTTONS
+================================= */
+button:focus, .btn:focus {
+  outline: 3px solid rgba(79,70,229,0.2);
+  outline-offset: 2px;
+}
+
+
 .btn {
   border-radius: 8px;
   font-weight: 500;
   padding: 8px 16px;
 }
-
-.btn-danger {
-  background: #dc2626;
-  border: none;
-}
-
-.btn-danger:hover {
-  background: #b91c1c;
-}
-
 .btn-success {
   background: #16a34a;
   border: none;
 }
-
 .btn-success:hover {
   background: #15803d;
 }
+.btn-danger {
+  background: #dc2626;
+  border: none;
+}
+.btn-danger:hover {
+  background: #b91c1c;
+}
 
-/* Graphs */
+/* ===============================
+   CHARTS
+================================= */
 canvas {
-  background: #ffffff;
+  background: #fff;
   border-radius: 12px;
   padding: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 .chart-container {
   position: relative;
-  height: 350px;   /* fix chart height */
-  width: 100%;     /* keep full width responsive */
+  height: 350px;   /* fixed height */
+  width: 100%;
   margin-bottom: 20px; /* space between charts */
 }
 
-
-/* Scrollable tables with fixed headers */
-.scrollable-table {
-  max-height: 400px; /* Approx 10 rows, adjust as needed */
-  overflow-y: auto;
-}
-
-.scrollable-table table {
+/* ===============================
+   FILE UPLOAD
+================================= */
+.file-input {
+  margin: 10px 0;
+  padding: 6px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
   width: 100%;
-  border-collapse: collapse;
 }
 
-.scrollable-table thead th {
-  position: sticky;
-  top: 0;
-  background: #343a40; /* Matches table-dark header */
-  color: #fff;
-  z-index: 1;
+.result {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #333;
 }
 
-
-/* Responsive Adjustments */
+/* ===============================
+   RESPONSIVENESS
+================================= */
 @media (max-width: 768px) {
-  .card h2 {
-    font-size: 1.8rem;
-  }
-  h1 {
-    font-size: 1.6rem;
-  }
+  .chart-container { height: 260px; }
+  .scrollable-table { max-height: 300px; }
 }
