@@ -204,6 +204,36 @@
     </div>
   </section>
 
+  <!-- Progress bar -->
+<div id="uploadModal" style="
+  display:none; 
+  position:fixed; top:0; left:0; width:100%; height:100%; 
+  background:rgba(0,0,0,0.5); 
+  justify-content:center; align-items:center;
+">
+  <div style="background:#fff; padding:20px; border-radius:10px; width:300px; text-align:center;">
+    <h3 id="modalTitle">Uploading...</h3>
+    <div style="width:100%; background:#eee; border-radius:5px; margin:15px 0;">
+      <div id="progressBar" style="
+        width:0%; height:20px; background:#16a34a; 
+        color:#fff; line-height:20px; border-radius:5px;
+      ">0%</div>
+    </div>
+    <p id="uploadStatus">Please wait...</p>
+    <button id="closeBtn" style="display:none;" onclick="closeModal()">Close</button>
+  </div>
+</div>
+
+  <!-- Export Students/Faculties -->
+   
+   <div class="container">
+    <h2 class="mb-4">Export Students & Faculties</h2>
+
+    <button class="btn btn-primary mb-3" onclick="exportStudents()">Export Students to Excel</button>
+    <button class="btn btn-success mb-3" onclick="exportFaculties()">Export Faculties to Excel</button>
+  </div>
+
+
 
   <script>
 const API_BASE = 'http://' + location.hostname + ':5001';
@@ -218,6 +248,31 @@ async function loadLiveStats() {
     document.getElementById('todayEntries').innerText = data.today_entries;
   } catch (err) {
     console.error("Error loading live stats:", err);
+  }
+}
+
+// ------------------- Charts -------------------
+async function loadChart(api, ctxId, label, fieldX, fieldY) {
+  try {
+    const res = await fetch(`${API_BASE}${api}`);
+    const data = await res.json();
+    const labels = data.map(d => d[fieldX]);
+    const values = data.map(d => d[fieldY]);
+
+    if (charts[ctxId]) {
+      charts[ctxId].data.labels = labels;
+      charts[ctxId].data.datasets[0].data = values;
+      charts[ctxId].update();
+    } else {
+      const ctx = document.getElementById(ctxId).getContext("2d");
+      charts[ctxId] = new Chart(ctx, {
+        type: "bar",
+        data: { labels, datasets: [{ label, data: values, backgroundColor: "#4f46e5", barThickness: 30 }] },
+        options: { responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { autoSkip: false } }, y: { beginAtZero: true } } }
+      });
+    }
+  } catch (err) {
+    console.error("Error loading chart:", err);
   }
 }
 
@@ -419,55 +474,99 @@ function exportRangeLogs() {
   window.location.href = `/export/range?start=${start}&end=${end}`;
 }
 
-// ------------------- Charts -------------------
-async function loadChart(api, ctxId, label, fieldX, fieldY) {
-  try {
-    const res = await fetch(`${API_BASE}${api}`);
-    const data = await res.json();
-    const labels = data.map(d => d[fieldX]);
-    const values = data.map(d => d[fieldY]);
 
-    if (charts[ctxId]) {
-      charts[ctxId].data.labels = labels;
-      charts[ctxId].data.datasets[0].data = values;
-      charts[ctxId].update();
-    } else {
-      const ctx = document.getElementById(ctxId).getContext("2d");
-      charts[ctxId] = new Chart(ctx, {
-        type: "bar",
-        data: { labels, datasets: [{ label, data: values, backgroundColor: "#4f46e5", barThickness: 30 }] },
-        options: { responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { autoSkip: false } }, y: { beginAtZero: true } } }
-      });
+
+// ------------------- Import Students/Faculties -------------------
+function openModal(title) {
+  document.getElementById("uploadModal").style.display = "flex";
+  document.getElementById("modalTitle").textContent = title;
+  document.getElementById("progressBar").style.width = "0%";
+  document.getElementById("progressBar").textContent = "0%";
+  document.getElementById("uploadStatus").textContent = "Uploading and processing...";
+  document.getElementById("closeBtn").style.display = "none";
+}
+
+function updateProgress(percent) {
+  const bar = document.getElementById("progressBar");
+  bar.style.width = percent + "%";
+  bar.textContent = percent + "%";
+}
+
+function finishModal(message) {
+  document.getElementById("modalTitle").textContent = "Done";
+  document.getElementById("uploadStatus").textContent = message;
+  document.getElementById("closeBtn").style.display = "inline-block";
+}
+
+function closeModal() {
+  document.getElementById("uploadModal").style.display = "none";
+}
+
+
+async function importStudents() {
+  const fileInput = document.getElementById("studentFile");
+  if (!fileInput.files.length) return alert("Select a student file to upload");
+
+  const formData = new FormData();
+  formData.append("file", fileInput.files[0]);
+
+  openModal("Uploading Students");
+
+  let fakeProgress = 0;
+  let interval = setInterval(() => {
+    if (fakeProgress < 80) {
+      fakeProgress += 2;
+      updateProgress(fakeProgress);
     }
+  }, 200);
+
+  try {
+    const res = await fetch("/import/students", { method: "POST", body: formData });
+    const data = await res.json();
+
+    clearInterval(interval);
+    updateProgress(100);
+    finishModal(data.success || data.error || "Students import complete!");
   } catch (err) {
-    console.error("Error loading chart:", err);
+    clearInterval(interval);
+    finishModal("Error uploading students file!");
+    updateProgress(0);
   }
 }
 
-// ------------------- Import Students/Faculties -------------------
-async function importStudents() {
-  const fileInput = document.getElementById("studentFile");
-  if (!fileInput.files.length) return alert("Select a file to upload");
 
-  const formData = new FormData();
-  formData.append("file", fileInput.files[0]);
-
-  const res = await fetch("/import/students", { method: "POST", body: formData });
-  const data = await res.json();
-  alert(data.success || data.error);
-}
 
 async function importFaculties() {
   const fileInput = document.getElementById("facultyFile");
-  if (!fileInput.files.length) return alert("Select a file to upload");
+  if (!fileInput.files.length) return alert("Select a faculty file to upload");
 
   const formData = new FormData();
   formData.append("file", fileInput.files[0]);
 
-  const res = await fetch("/import/faculties", { method: "POST", body: formData });
-  const data = await res.json();
-  alert(data.success || data.error);
+  openModal("Uploading Faculties");
+
+  let fakeProgress = 0;
+  let interval = setInterval(() => {
+    if (fakeProgress < 80) {
+      fakeProgress += 2;
+      updateProgress(fakeProgress);
+    }
+  }, 200);
+
+  try {
+    const res = await fetch("/import/faculties", { method: "POST", body: formData });
+    const data = await res.json();
+
+    clearInterval(interval);
+    updateProgress(100);
+    finishModal(data.success || data.error || "Faculties import complete!");
+  } catch (err) {
+    clearInterval(interval);
+    finishModal("Error uploading faculties file!");
+    updateProgress(0);
+  }
 }
+
 
 // ------------------------ INITIALIZE ------------------------
 document.addEventListener("DOMContentLoaded", () => {
@@ -501,6 +600,19 @@ document.addEventListener("DOMContentLoaded", () => {
   }, 30000);
 });
 </script>
+
+
+  <script>
+  
+
+    function exportStudents() {
+      window.location.href = `${API_BASE}/export/students`;
+    }
+
+    function exportFaculties() {
+      window.location.href = `${API_BASE}/export/faculties`;
+    }
+  </script>
 
 </body>
 

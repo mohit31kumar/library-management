@@ -352,7 +352,7 @@ def handle_entry():
         # Check library hours
         now = datetime.now(IST)
         if now.hour < 7 or now.hour >= 20:
-            flash("Library closed. Hours: 7 AM - 8 PM", "error")
+            flash("Library closed. Active Hours: 7 AM - 8 PM", "error")
             return redirect(url_for('index'))
 
         # Check if user is already inside

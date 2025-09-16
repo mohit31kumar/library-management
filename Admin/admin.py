@@ -6,7 +6,7 @@ from flask import Response
 from datetime import date, datetime
 from flask import Flask, render_template, jsonify, send_file, request
 from werkzeug.utils import secure_filename
-
+import openpyxl
 
 # Flask app setup
 app = Flask(__name__)
@@ -310,82 +310,142 @@ def export_range_logs():
 # ------------------- Import Students -------------------
 @app.route("/import/students", methods=["POST"])
 def import_students():
-    if 'file' not in request.files:
+    if "file" not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
-    file = request.files['file']
+
+    file = request.files["file"]
     if file.filename == "":
         return jsonify({"error": "Empty filename"}), 400
 
     try:
-        df = pd.read_excel(file)
-        required_cols = ['full_reg_no', 'name', 'branch', 'year']
-        if not all(col in df.columns for col in required_cols):
-            return jsonify({"error": f"Required columns: {required_cols}"}), 400
+        df = pd.read_excel(file, dtype=str)   # force everything to string
+        df = df.where(pd.notnull(df), None)   # replace NaN with None
 
         conn = get_db_connection()
         cursor = conn.cursor()
-        inserted = 0
+
         for _, row in df.iterrows():
             try:
                 cursor.execute("""
                     INSERT INTO students (full_reg_no, name, branch, year)
                     VALUES (%s, %s, %s, %s)
-                    ON DUPLICATE KEY UPDATE name=%s, branch=%s, year=%s
-                """, (row['full_reg_no'], row['name'], row['branch'], row['year'],
-                      row['name'], row['branch'], row['year']))
-                inserted += 1
+                    ON DUPLICATE KEY UPDATE 
+                        name = VALUES(name),
+                        branch = VALUES(branch),
+                        year = VALUES(year)
+                """, (
+                    row.get("full_reg_no"),
+                    row.get("name"),
+                    row.get("branch"),
+                    row.get("year")
+                ))
             except Exception as e:
                 print(f"Skipping row due to error: {e}")
+                continue
+
         conn.commit()
-        return jsonify({"success": f"{inserted} students added/updated successfully"})
+        cursor.close()
+        conn.close()
+
+        return jsonify({"success": "Students imported successfully"})
     except Exception as e:
-        print("Error importing students:", e)
-        return jsonify({"error": "Failed to import students"}), 500
-    finally:
-        if 'cursor' in locals():
-            cursor.close()
-        if 'conn' in locals():
-            conn.close()
+        return jsonify({"error": str(e)}), 500
+
 
 # ------------------- Import Faculties -------------------
 @app.route("/import/faculties", methods=["POST"])
 def import_faculties():
-    if 'file' not in request.files:
+    if "file" not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
-    file = request.files['file']
+
+    file = request.files["file"]
     if file.filename == "":
         return jsonify({"error": "Empty filename"}), 400
 
     try:
-        df = pd.read_excel(file)
-        required_cols = ['full_reg_no', 'name', 'email']
-        if not all(col in df.columns for col in required_cols):
-            return jsonify({"error": f"Required columns: {required_cols}"}), 400
+        df = pd.read_excel(file, dtype=str)
+        df = df.where(pd.notnull(df), None)
 
         conn = get_db_connection()
         cursor = conn.cursor()
-        inserted = 0
+
         for _, row in df.iterrows():
             try:
                 cursor.execute("""
                     INSERT INTO faculty (full_reg_no, name, email)
                     VALUES (%s, %s, %s)
-                    ON DUPLICATE KEY UPDATE name=%s, email=%s
-                """, (row['full_reg_no'], row['name'], row['email'],
-                      row['name'], row['email']))
-                inserted += 1
+                    ON DUPLICATE KEY UPDATE 
+                        name = VALUES(name),
+                        email = VALUES(email)
+                """, (
+                    row.get("full_reg_no"),
+                    row.get("name"),
+                    row.get("email")
+                ))
             except Exception as e:
                 print(f"Skipping row due to error: {e}")
+                continue
+
         conn.commit()
-        return jsonify({"success": f"{inserted} faculties added/updated successfully"})
+        cursor.close()
+        conn.close()
+
+        return jsonify({"success": "Faculties imported successfully"})
     except Exception as e:
-        print("Error importing faculties:", e)
-        return jsonify({"error": "Failed to import faculties"}), 500
-    finally:
-        if 'cursor' in locals():
-            cursor.close()
-        if 'conn' in locals():
-            conn.close()
+        return jsonify({"error": str(e)}), 500
+
+
+# export database to excel
+@app.route("/export/students")
+def export_students():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT full_reg_no, name, branch, year FROM students")
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Students"
+
+    # headers
+    ws.append(["full_reg_no", "name", "branch", "year"])
+    for row in rows:
+        ws.append(row)
+
+    # save to memory
+    file_stream = io.BytesIO()
+    wb.save(file_stream)
+    file_stream.seek(0)
+
+    return send_file(file_stream, as_attachment=True, download_name="students.xlsx", mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+@app.route("/export/faculties")
+def export_faculties():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT full_reg_no, name, email FROM faculty")
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Faculties"
+
+    # headers
+    ws.append(["full_reg_no", "name", "email"])
+    for row in rows:
+        ws.append(row)
+
+    file_stream = io.BytesIO()
+    wb.save(file_stream)
+    file_stream.seek(0)
+
+    return send_file(file_stream, as_attachment=True, download_name="faculties.xlsx", mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=5001)

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Developer Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Developer Dashboard</h1>
+        <div class="alerts">
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert">{{ message }}</div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+        </div>
+        
+        <div class="breadcrumbs">
+            <a href="{{ url_for('dashboard') }}">/</a>
+            {% for crumb in breadcrumbs %}
+                / <a href="{{ url_for('dashboard', path=crumb.path) }}">{{ crumb.name }}</a>
+            {% endfor %}
+        </div>
+
+        <div class="dashboard-section">
+            <h2>File Manager</h2>
+            <div class="file-list-header">
+    <a href="{{ url_for('dashboard', path=parent_path) }}" class="btn {% if not current_path %}disabled-btn{% endif %}">Go Back</a>
+    <form id="upload-form" action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" id="file-input" required>
+        <input type="hidden" name="path" value="{{ current_path }}">
+        <button type="submit" class="btn">Upload File</button>
+    </form>
+</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Size</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr class="{{ 'folder-row' if item.is_dir else 'file-row' }}">
+                        <td>
+                            {% if item.is_dir %}
+
+    
+        <a href="{{ url_for('dashboard', path=(current_path + '/' + item.name) if current_path else item.name) }}">{{ item.name }}</a>
+                                {% else %}
+                                {{ item.name }}
+                            {% endif %}
+                        </td>
+                        <td>{{ 'Folder' if item.is_dir else 'File' }}</td>
+                        <td>{{ item.size if not item.is_dir else '-' }}</td>
+                        <td>
+                            {% if not item.is_dir %}
+                            <a href="{{ url_for('download_item', path=(current_path + '/' + item.name) if current_path else item.name) }}" class="btn">Download</a>
+                            {% endif %}
+                            <button class="btn btn-delete" data-path="{{ (current_path + '/' + item.name) if current_path else item.name }}" data-type="{{ 'dir' if item.is_dir else 'file' }}">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="dashboard-section">
+            <h2>Terminal</h2>
+            <div class="terminal-output" id="terminal-output"></div>
+            <div class="terminal-input-container">
+                <span class="terminal-prompt">>&nbsp;</span>
+                <input type="text" id="terminal-input" placeholder="Run a command..." autocomplete="off">
+                <button id="run-command-btn" class="btn">Run</button>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
